@@ -3,25 +3,25 @@ const fs = require('fs');
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
 const { memberLogin, memberRegister, memberInfo, memberPersonalInfo } = require('../models/member')
+const { validationResult } = require('express-validator');
 // const member = require('../models/member')
 
 exports.postLogin = async (req, res, next) => {
-    console.log(req.body.email, 'email')
+
     memberLogin(req.body.email, async (dbres, err) => {
-        console.log(req.body.pass, dbres, 'dbresspostLogin')
         if (!dbres) {
-            console.log('adressみす');
             const error = new Error(err);
             error.msg = 'メールアドレスもしくはパスワードに誤りがあります。'
             return next(error);
         }
         const judge = await bcrypt.compare(req.body.pass, dbres.password);
-        console.log(judge)
         if (!judge) {
             console.log('adressみす');
             const error = new Error(err);
             error.msg = 'メールアドレスもしくはパスワードに誤りがあります。'
-            next(error);
+            error.statusCode = 404;
+            return next(error)
+
             // res.status(400).json({ msg: 'メールアドレスもしくはパスワードに誤りがあります。' })
             // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
         } else {
@@ -45,11 +45,22 @@ exports.postLogin = async (req, res, next) => {
 }
 
 exports.postRegister = async (req, res, next) => {
+    const errors = validationResult(req);
+    console.log(errors);
+    if (!errors.isEmpty()) {
+        const error = new Error();
+        error.msg = "無効な入力です。";
+        error.statusCode = 422
+        return next(error);
+    }
     const pass = await bcrypt.hash(req.body.pass, 12)
     memberRegister(req.body.name, req.body.email, pass, req.body.birth, req.body.address, (dbres = null, err) => {
         console.log(dbres, err);
         if (err) {
-            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+            const error = new Error(err);
+            error.msg = 'メールアドレスは既に登録されています。'
+            error.statusCode = 422
+            return next(error);
             // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
         } else {
             console.log(dbres, "mem25");

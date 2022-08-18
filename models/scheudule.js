@@ -40,10 +40,10 @@ exports.schduleInsert = async function (schedule, scheduleDetail, type, startTim
 }
 
 exports.schduleUpdate = async function (schedule, scheduleDetail, type, startTime, endTime, schedule_id, date, id, cb) {
-    console.log(schedule, 'kekkkkkkkka');
+    console.log(schedule, scheduleDetail, type, startTime, endTime, schedule_id, date, id, 'kekkkkkkkka');
     console.log(schedule);
     db.serialize(() => {
-        db.run("UPDATE schedule_detail set schedule = ?,schedule_detail = ?,schedule_type = ?,schedule_start = ?,schedule_end = ?,schedule_id = ?,schedule_date = ? where id=?;", schedule, scheduleDetail, type, startTime, endTime, schedule_id, date, id);
+        db.run("UPDATE schedule_detail set schedule = ?,schedule_detail = ?,schedule_type = ?,schedule_start = ?,schedule_end = ?,schedule_id = ?,schedule_date = ? where id=? ;", schedule, scheduleDetail, type, startTime, endTime, schedule_id, date, id);
         db.all("select * from schedule_detail where schedule_id = ?", schedule_id, (err, res) => {
             console.log('取得結果', res);
             cb(res, err)
