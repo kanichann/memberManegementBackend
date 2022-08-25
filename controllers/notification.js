@@ -3,7 +3,7 @@ const fs = require('fs');
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
 const { notificationData, notificationInsert, notificationDataAll, readSet, readGet, notreadGet } = require('../models/notification');
-
+const { validationResult } = require('express-validator');
 // const member = require('../models/member')
 
 
@@ -21,7 +21,15 @@ const { notificationData, notificationInsert, notificationDataAll, readSet, read
 //     });
 // }
 exports.postSet = async (req, res, next) => {
-
+    const errors = validationResult(req);
+    console.log(errors);
+    if (!errors.isEmpty()) {
+        console.log(errors.isEmpty());
+        const error = new Error();
+        error.msg = "無効な入力です。";
+        error.statusCode = 422
+        return next(error);
+    }
     const { title, contents, type, pdfname } = req.body;
 
     notificationInsert(title, contents, type, req.pdffile, pdfname, (dbres, err) => {

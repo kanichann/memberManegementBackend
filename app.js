@@ -2,7 +2,7 @@ const path = require('path');
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const express = require('express');
-
+const fs = require('fs');
 
 const memberRoute = require('./routes/member.js')
 const scheduleRoute = require('./routes/schedule.js')
@@ -41,6 +41,13 @@ app.use((req, res, next) => {
 })
 app.use((error, req, res, next) => {
     console.log('エラー！！！！！');
+    if (req.file) {
+        console.log(req.file, 'tkaotkaoktoat', req.file.path);
+        fs.unlink(req.file.path, (err) => {
+            console.log(err);
+
+        });
+    }
     res.status(error.statusCode || 400).json({ msg: error.msg || "エラーが発生いたしました。" });
 })
 

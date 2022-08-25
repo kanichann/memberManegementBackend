@@ -8,6 +8,7 @@ const { validationResult } = require('express-validator');
 
 exports.postLogin = async (req, res, next) => {
 
+    console.log(req, 'kdajfl;jdf');
     memberLogin(req.body.email, async (dbres, err) => {
         if (!dbres) {
             const error = new Error(err);
@@ -45,6 +46,7 @@ exports.postLogin = async (req, res, next) => {
 }
 
 exports.postRegister = async (req, res, next) => {
+
     const errors = validationResult(req);
     console.log(errors);
     if (!errors.isEmpty()) {
@@ -54,26 +56,32 @@ exports.postRegister = async (req, res, next) => {
         return next(error);
     }
     const pass = await bcrypt.hash(req.body.pass, 12)
-    memberRegister(req.body.name, req.body.email, pass, req.body.birth, req.body.address, (dbres = null, err) => {
-        console.log(dbres, err);
-        if (err) {
-            const error = new Error(err);
-            error.msg = 'メールアドレスは既に登録されています。'
-            error.statusCode = 422
-            return next(error);
-            // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
-        } else {
-            console.log(dbres, "mem25");
-            const token = jwt.sign({
-                mail: req.body.email,
-                userId: dbres.member_id,
-            }, 'someSupterpass',
-                { expiresIn: '1h' });
-            // res.status(201).json(JSON.stringify(dbres));
-            res.status(201).json({ token: token, admin: 0 });
-            // res.status(201).json(JSON.stringify({ data: 'いけた' }));
-        }
-    });
+    try {
+        memberRegister(req.body.name, req.body.email, pass, req.body.birth, req.body.address, next, (dbres = null, err) => {
+            if (err) {
+                const error = new Error(err);
+                error.msg = 'メールアドレスは既に登録されています。'
+                error.statusCode = 422
+                return next(error);
+                // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
+            } else {
+                console.log(dbres, "mem25");
+                const token = jwt.sign({
+                    mail: req.body.email,
+                    userId: dbres.member_id,
+                }, 'someSupterpass',
+                    { expiresIn: '1h' });
+                // res.status(201).json(JSON.stringify(dbres));
+                res.status(201).json({ token: token, admin: 0 });
+                // res.status(201).json(JSON.stringify({ data: 'いけた' }));
+            }
+        });
+    } catch (err) {
+        const error = new Error(err);
+        consolw.log('takotakotakokok')
+        error.statusCode = 400;
+        return next(error);
+    }
 }
 exports.getMember = async (req, res, next) => {
     console.log(req.mail, 'getMember,Member,57');

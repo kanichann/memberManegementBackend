@@ -2,6 +2,7 @@ const express = require('express');
 const auth = require('../middleware/auth');
 const notificationController = require('../controllers/notification');
 const multer = require('multer');
+const { check } = require('express-validator')
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -23,10 +24,8 @@ router.post('/set', auth, upload.single('file'), function (req, res, next) {
     if (!req.pdfname) {
         req.pdfname = null
     }
-    console.log('ap4444')
-    console.log(req.pdfname);
     next()
-}, notificationController.postSet);
+}, [check("title").not().isEmpty(), check("contents").not().isEmpty(), check("type").not().isEmpty(),], notificationController.postSet);
 
 router.get('/', auth, notificationController.get);
 router.get('/all', auth, notificationController.getAll);

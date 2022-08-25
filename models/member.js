@@ -15,21 +15,33 @@ exports.memberAll = async function (cb) {
 }
 
 exports.memberLogin = async function (mail, cb) {
-    await db.serialize(() => {
+    db.serialize(() => {
         // db.get(`select * from memberData where mail = ${String(mail)} AND pass = ${pass}`, (err, res) => {
         db.get("select member_id,email,password,admin from member where email = ?", mail, (err, res) => {
             cb(res, err)
         })
     })
 }
-exports.memberRegister = async function (name, mail, pass, birth, address, cb) {
-    db.serialize(() => {
-        // db.get(`select * from memberData where mail = ${String(mail)} AND pass = ${pass}`, (err, res) => {
-        db.run("insert into member(name,email,password,birth,address) values(?,?,?,?,?);", name, mail, pass, birth, address,);
-        db.get("select member_id from member where email = ?", mail, (err, res) => {
-            cb(res, err)
+exports.memberRegister = async function (name, mail, pass, birth, address, next, cb) {
+    try {
+        let errState;
+
+        db.serialize(() => {
+            // db.get(`select * from memberData where mail = ${String(mail)} AND pass = ${pass}`, (err, res) => {
+            db.run("insert into member(name,email,password,birth,address) values(?,?,?,?,?);", name, mail, pass, birth, address, function (err) {
+                if (err) {
+                    errState = err;
+                    return
+                }
+            });
+            db.get("select member_id from member where email = ?", mail, (err, res) => {
+                if (err) errState = err;
+                cb(res, errState);
+            })
         })
-    })
+    } catch (err) {
+        console.log('catch!!!!!!!');
+    }
 }
 exports.memberInfo = async function (mail, cb) {
     console.log(mail, "member37");
