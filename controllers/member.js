@@ -1,14 +1,17 @@
 
 const fs = require('fs');
 const bcrypt = require("bcrypt");
-const jwt = require('jsonwebtoken')
-const { memberLogin, memberRegister, memberInfo, memberPersonalInfo } = require('../models/member')
+const jwt = require('jsonwebtoken');
+const { memberLogin, memberRegister, memberInfo, memberPersonalInfo, memberAddress, memberAddAddress, memberChangeAddress, memberChangeEmail, memberGetEmail, memberGetAll } = require('../models/member');
+const { writeCsv, resCsv } = require('../modules/csv')
+
+
 const { validationResult } = require('express-validator');
+const path = require('path');
 // const member = require('../models/member')
 
 exports.postLogin = async (req, res, next) => {
 
-    console.log(req, 'kdajfl;jdf');
     memberLogin(req.body.email, async (dbres, err) => {
         if (!dbres) {
             const error = new Error(err);
@@ -48,7 +51,7 @@ exports.postLogin = async (req, res, next) => {
 exports.postRegister = async (req, res, next) => {
 
     const errors = validationResult(req);
-    console.log(errors);
+    console.log(errors, 'validate');
     if (!errors.isEmpty()) {
         const error = new Error();
         error.msg = "無効な入力です。";
@@ -78,7 +81,7 @@ exports.postRegister = async (req, res, next) => {
         });
     } catch (err) {
         const error = new Error(err);
-        consolw.log('takotakotakokok')
+        console.log('takotakotakokok')
         error.statusCode = 400;
         return next(error);
     }
@@ -107,4 +110,114 @@ exports.getPersonalInfo = async (req, res, next) => {
             res.status(201).json(dbres);
         }
     });
+}
+exports.getAddress = async (req, res, next) => {
+    console.log('resresre');
+    memberAddress(req.userId, (dbres = null, err) => {
+        if (err) {
+            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+            // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
+        } else {
+            console.log(dbres, req.userId, 'getPI');
+            res.status(201).json(dbres);
+        }
+    })
+}
+exports.getAllMember = async (req, res, next) => {
+    memberGetAll((dbres = null, err) => {
+        if (err) {
+            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+            // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
+        } else {
+            let headerAry = {
+                name: '名前',
+                email: 'メールアドレス',
+                birth: '誕生日',
+                address: '住所'
+            }
+            const keysAry = Object.keys(dbres[0]);
+            let header = keysAry.map((key) => {
+                if (headerAry[key]) {
+                    return headerAry[key];
+                }
+            })
+
+
+            res.status(201).json({ titles: header, data: dbres });
+        }
+    })
+}
+exports.postAddAddress = async (req, res, next) => {
+    console.log('reqresu')
+    memberAddAddress(req.userId, req.body.address, (dbres = null, err) => {
+        if (err) {
+            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+            // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
+        } else {
+            console.log(dbres);
+            res.status(201).json(dbres);
+        }
+    })
+}
+exports.postChangeAddress = async (req, res, next) => {
+    console.log('reqresu', req.body.addressId)
+    memberChangeAddress(req.userId, req.body.addressId, (dbres = null, err) => {
+
+        if (err) {
+            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+            // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
+        } else {
+            console.log(dbres);
+            res.status(201).json(dbres);
+        }
+    })
+}
+exports.postChangeEmail = async (req, res, next) => {
+    memberChangeEmail(req.userId, req.body.email, (err) => {
+        if (err) {
+            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+        } else {
+            res.status(201).json(JSON.stringify({ message: 'メールアドレスを変更しました。' }));
+        }
+    })
+}
+exports.getEmail = async (req, res, next) => {
+    memberGetEmail(req.userId, (dbres = null, err) => {
+        console.log(dbres);
+        if (err) {
+            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+            // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
+        } else {
+            res.status(201).json(dbres);
+        }
+    })
+}
+exports.getMemberCsv = async (req, res, next) => {
+    memberGetAll(async (dbres = null, err) => {
+        if (err) {
+            res.status(400).json(JSON.stringify({ err: '通信失敗' }))
+            // res.status(400).json(JSON.stringify({ message: '通信失敗' }))
+        } else {
+
+            let csv = await resCsv(dbres);
+            console.log(csv);
+            res.setHeader('Content-disposition', 'attachment; filename=data.csv');
+            res.setHeader('Content-Type', 'text/csv; charset=UTF-8');
+            res.send(csv)
+
+            // await writeCsv('lib/data.csv', dbres);
+
+            // // const options = {
+            // //     root: path.join(__dirname, '../lib'),
+            // //     dotfiles: 'deny',
+            // //     headers: {
+            // //         'x-timestamp': Date.now(),
+            // //         'x-sent': true,
+            // //         'Content-Type': 'application/force-download'
+            // //     }
+            // // }
+            // console.log(path.join(__dirname, '../lib/data.csv'));
+            // res.download(path.join(__dirname, '../lib/data'), 'data.csv')
+        }
+    })
 }

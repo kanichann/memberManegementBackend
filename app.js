@@ -19,6 +19,7 @@ app.use((req, res, next) => {
     next();
 })
 
+
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser())
@@ -34,12 +35,13 @@ app.use('/notification', notificationRoute)
 
 // app.use(errorController.get404);
 app.use((req, res, next) => {
-    const error = new Error(err);
+    const error = new Error();
     error.statusCode = 404;
     error.msg = 'ページが見つかりません。'
     return next(error)
 })
 app.use((error, req, res, next) => {
+    console.log(error);
     console.log('エラー！！！！！');
     if (req.file) {
         console.log(req.file, 'tkaotkaoktoat', req.file.path);
